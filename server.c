@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); /*create socket*/
     if (s < 0)
         fatal("socket failed");
-    setsockopt(s, SOL_SOCKET, SO_REUSEADDR(char *) & on, sizeof(on));
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
 
     b = bind(s, (struct sockaddr *)&channel, sizeof(channel));
     if (b < 0)
