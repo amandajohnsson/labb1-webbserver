@@ -45,16 +45,18 @@ int main(int argc, char *argv[])
     l = listen(s, QUEUE_SIZE); /*specify queue size */
     if (l < 0)
         fatal("listen failed");
-
     /*Socket is now set up and bound.  Wait for connection and process it. */
     while (1)
     {
+        printf("Waiting on connection\n");
         sa = accept(s, 0, 0); /*block for connection request */
+        printf("Connected\n");
         if (sa < 0)
             fatal("accept failed");
 
+        snprintf((char *)buf, sizeof(buf), "HTTP/1.0 200 OK\r\n\r\nHello");
+        write(sa, (char *)buf, strlen((char *)buf));
         read(sa, buf, BUF_SIZE); /*READ FILE NAME FROM SOCKET*/
-
         /* get and return the file */
 
         fd = open(buf, O_RDONLY); /* open the file to be sent back */
