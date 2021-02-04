@@ -20,7 +20,7 @@ char web_page[] =
     "<html><head><title>ShellUaveX</title>\r\n"
     "<style>body {background-color: #FFA3FF }</style></head>\r\n"
     "<body><center><h1>Kossan säger muuu!</h1><br>\r\n"
-    "<img src=\"test_bild.jpg\"></center></body></html>\r\n";
+    "<img src=\"ko.jpg\"></center></body></html>\r\n";
 
 void fatal(char *string)
 {
@@ -68,10 +68,10 @@ int main(int argc, char *argv[])
         if (sa < 0)
             fatal("accept failed");
         printf("Connected\n");
+        memset(buf, 0, BUF_SIZE);
         read(sa, buf, BUF_SIZE); /*READ FILE NAME FROM SOCKET*/
+
         /* get and return the file */
-        //snprintf((char *)buf, sizeof(buf), "HTTP/1.0 200 OK\r\n\r\nHello");
-        //write(sa, (char *)buf, strlen((char *)buf));
 
         /*if (!strncmp(buf, "GET /favicon.ico", 16))
         {
@@ -80,17 +80,23 @@ int main(int argc, char *argv[])
                 fatal("open failed");
             sendfile(sa, fd, NULL, BUF_SIZE);
         }*/
-        if (!strncmp(buf, "GET /test_bild.jpg", 16))
+        if (!strncmp(buf, "GET /ko.jpg", 16))
         {
-            fd = open("test_bild.jpg", O_RDONLY); /* open the file to be sent back */
+            printf("Hej\n");
+            fd = open("ko.jpg", O_RDONLY); /* open the file to be sent back */
             if (fd < 0)
                 fatal("open failed");
-            sendfile(sa, fd, NULL, 10000);
+            /* bytes = read(fd, buf, BUF_SIZE); //read from file
+            if (bytes <= 0)
+                break;             //check for end of file
+            write(sa, buf, bytes); //write bytes to socket
+*/
+            sendfile(sa, fd, NULL, 356565);
+            close(fd);
         }
-        else
-        {
-            write(sa, web_page, sizeof(web_page) - 1);
-        }
+
+        write(sa, web_page, sizeof(web_page) - 1);
+        printf("%s", buf);
         /* while (1)
         {
             bytes = read(fd, buf, BUF_SIZE); /*read from file
@@ -102,5 +108,5 @@ int main(int argc, char *argv[])
         close(fd); /*close file*/
         close(sa); /*close connection*/
     }
+    return 0;
 }
-//hello
