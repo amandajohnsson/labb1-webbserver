@@ -90,23 +90,23 @@ int main(int argc, char *argv[])
             printf("\n\n I if!\n\n");
             fd = open("ko.jpg", O_RDONLY); /* open the file to be sent back */
 
-            printf("FD = %d", fd);
             if (fd < 0)
                 fatal("open failed");
-            printf("Hej\n");
-            /*bytes = read(fd, buf, BUF_SIZE); //read from file
-            if (bytes <= 0)
-                break;             //check for end of file
-            write(sa, buf, bytes); //write bytes to socket*/
+
             char imageHeaders[] =
                 "HTTP/1.0 200 Ok\r\n"
                 "Content-Type: image/jpg\r\n"
                 "Content-Length: 256564\r\n\r\n";
 
             write(sa, imageHeaders, sizeof(imageHeaders) - 1);
-
-            int check = sendfile(sa, fd, NULL, 300000);
-            printf("Value of sendfile: %d\n", check);
+            while (1)
+            {
+                bytes = read(fd, buf, BUF_SIZE); //read from file
+                if (bytes <= 0)
+                    break;             //check for end of file
+                write(sa, buf, bytes); //write bytes to socket
+            }
+            //sendfile(sa, fd, NULL, 300000);
             close(fd);
         }
         else
