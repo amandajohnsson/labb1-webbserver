@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
         if (sa < 0)
             fatal("accept failed");
         printf("Connected\n");
+
         memset(buf, 0, BUF_SIZE);
         read(sa, buf, BUF_SIZE); /*READ FILE NAME FROM SOCKET*/
 
@@ -80,32 +81,43 @@ int main(int argc, char *argv[])
                 fatal("open failed");
             sendfile(sa, fd, NULL, BUF_SIZE);
         }*/
-        if (!strncmp(buf, "GET /ko.jpg", 16))
+        printf("Doing compare. Buf is:\n");
+        printf("%s", buf);
+        printf("END OF BUF\n");
+
+        if (!strncmp(buf, "GET /ko.jpg", 11))
         {
-            printf("Hej\n");
+            printf("\n\n I if!\n\n");
             fd = open("ko.jpg", O_RDONLY); /* open the file to be sent back */
+
+            printf("FD = %d", fd);
             if (fd < 0)
                 fatal("open failed");
-            /* bytes = read(fd, buf, BUF_SIZE); //read from file
+            printf("Hej\n");
+            /*bytes = read(fd, buf, BUF_SIZE); //read from file
             if (bytes <= 0)
                 break;             //check for end of file
-            write(sa, buf, bytes); //write bytes to socket
-*/
-            sendfile(sa, fd, NULL, 356565);
+            write(sa, buf, bytes); //write bytes to socket*/
+            char imageHeaders[] =
+                "HTTP/1.0 200 Ok\r\n"
+                "Content-Type: image/jpg\r\n"
+                "Content-Length: 256564\r\n\r\n";
+
+            write(sa, imageHeaders, sizeof(imageHeaders) - 1);
+
+            int check = sendfile(sa, fd, NULL, 300000);
+            printf("Value of sendfile: %d\n", check);
             close(fd);
         }
-
-        write(sa, web_page, sizeof(web_page) - 1);
-        printf("%s", buf);
-        /* while (1)
+        else
         {
-            bytes = read(fd, buf, BUF_SIZE); /*read from file
-            if (bytes <= 0)
-                break;             /*check for end of file 
-            write(sa, buf, bytes); /*write bytes to socket 
+            printf("I else\n");
+            write(sa, web_page, sizeof(web_page) - 1);
         }
-        */
-        close(fd); /*close file*/
+
+        //printf("%s", buf);
+        //shutdown(sa, SHUT_WR);
+
         close(sa); /*close connection*/
     }
     return 0;
