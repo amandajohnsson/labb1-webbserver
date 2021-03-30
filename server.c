@@ -7,25 +7,37 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/fcntl.h>
-#include <sys/sendfile.h>
+//#include <sys/sendfile.h>
 
 #define SERVER_PORT 12345
 #define BUF_SIZE 4096
 #define QUEUE_SIZE 10
 
-char web_page[] =
-    "HTTP/1.0 200 OK\r\n"
-    "Content-Type: text/html; charset=UTF-8\r\n\r\n"
-    "<!DOCTYPE html>\r\n"
-    "<html><head><title>ShellUaveX</title>\r\n"
-    "<style>body {background-color: #FFA3FF }</style></head>\r\n"
-    "<body><center><h1>Kossan säger muuu!</h1><br>\r\n"
-    "<img src=\"ko.jpg\"></center></body></html>\r\n";
+char *parsebuf(char *string)
+{
+
+    return string;
+}
 
 void fatal(char *string)
 {
     printf("%s", string);
     exit(1);
+}
+
+void send_file(int sa, int fd)
+{
+
+    int bytes;
+    char buf[BUF_SIZE];
+
+    while (1)
+    {
+        bytes = read(fd, buf, BUF_SIZE); //read from file
+        if (bytes <= 0)
+            break;             //check for end of file
+        write(sa, buf, bytes); //write bytes to socket
+    }
 }
 
 int main(int argc, char *argv[])
@@ -67,25 +79,35 @@ int main(int argc, char *argv[])
         sa = accept(server, NULL, NULL); /*block for connection request */
         if (sa < 0)
             fatal("accept failed");
-        printf("Connected\n");
+        printf("Connected\n\n");
 
         memset(buf, 0, BUF_SIZE);
         read(sa, buf, BUF_SIZE); /*READ FILE NAME FROM SOCKET*/
 
         /* get and return the file */
 
-        /*if (!strncmp(buf, "GET /favicon.ico", 16))
-        {
-            fd = open("favicon.ico", O_RDONLY); /* open the file to be sent back */
-        /*if (fd < 0)
-                fatal("open failed");
-            sendfile(sa, fd, NULL, BUF_SIZE);
-        }*/
         printf("Doing compare. Buf is:\n");
-        printf("%s", buf);
+        printf("%s\n", buf);
         printf("END OF BUF\n");
 
-        if (!strncmp(buf, "GET /ko.jpg", 11))
+        if (!strncmp(buf, "GET / ", 6))
+        {
+
+            char web_page_Header[] =
+                "HTTP/1.0 200 OK\r\n"
+                "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+            write(sa, web_page_Header, sizeof(web_page_Header) - 1);
+
+            fd = open("index.html", O_RDONLY); /* open the file to be sent back */
+            if (fd < 0)
+                fatal("open failed");
+
+            send_file(sa, fd);
+
+            close(fd);
+        }
+
+        else if (!strncmp(buf, "GET /%22ko.jpg/%22", 18))
         {
             printf("\n\n I if!\n\n");
             fd = open("ko.jpg", O_RDONLY); /* open the file to be sent back */
@@ -96,7 +118,7 @@ int main(int argc, char *argv[])
             char imageHeaders[] =
                 "HTTP/1.0 200 Ok\r\n"
                 "Content-Type: image/jpg\r\n"
-                "Content-Length: 256564\r\n\r\n";
+                "Content-Length: 178541\r\n\r\n";
 
             write(sa, imageHeaders, sizeof(imageHeaders) - 1);
             while (1)
@@ -109,14 +131,64 @@ int main(int argc, char *argv[])
             //sendfile(sa, fd, NULL, 300000);
             close(fd);
         }
+        else if (!strncmp(buf, "GET /%22kogif.gif/%22", 21))
+        {
+
+            fd = open("kogif.gif", O_RDONLY);
+            if (fd < 0)
+                fatal("open failed");
+
+            char imageHeaders[] =
+                "HTTP/1.0 200 Ok\r\n"
+                "Content-Type: image/gif\r\n"
+                "Content-Length: 32044\r\n\r\n";
+
+            write(sa, imageHeaders, sizeof(imageHeaders) - 1);
+
+            send_file(sa, fd);
+
+            printf("\n\n");
+
+            close(fd);
+        }
+        else if (!strncmp(buf, "GET /%22felko.jpg/%22 ", 22))
+        {
+
+            fd = open("felko.jpg", O_RDONLY); /* open the file to be sent back */
+
+            printf("FD = %d\n", fd);
+            if (fd < 0)
+                fatal("open failed");
+
+            char imageHeaders[] =
+                "HTTP/1.0 200 Ok \r\n"
+                "Content-Type: image/jpg\r\n"
+                "Content-Length: 316226\r\n\r\n";
+
+            write(sa, imageHeaders, sizeof(imageHeaders) - 1);
+
+            send_file(sa, fd);
+
+            printf("\n\n");
+
+            close(fd);
+        }
         else
         {
-            printf("I else\n");
-            write(sa, web_page, sizeof(web_page) - 1);
-        }
+            char web_page_Header[] =
+                "HTTP/1.0 400 Not Found\r\n"
+                "Content-Type: text/html; charset=UTF-8\r\n\r\n";
 
-        //printf("%s", buf);
-        //shutdown(sa, SHUT_WR);
+            write(sa, web_page_Header, sizeof(web_page_Header) - 1);
+
+            fd = open("errorpage.html", O_RDONLY); /* open the file to be sent back */
+            if (fd < 0)
+                fatal("open failed");
+
+            send_file(sa, fd);
+
+            close(fd);
+        }
 
         close(sa); /*close connection*/
     }
